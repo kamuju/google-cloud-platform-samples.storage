@@ -39,47 +39,25 @@ App Identity Python API Overview:
   <https://code.google.com/appengine/docs/python/appidentity/overview.html>
 """
 
+import os
+import jinja2
 from apiclient.discovery import build as build_service
 import httplib2
 from oauth2client.client import OAuth2WebServerFlow
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp.util import login_required
-from google.appengine.ext.webapp.util import run_wsgi_app
 
 # NOTE: You must provide a client ID and secret with access to the GCS JSON API.
 # You can acquire a client ID and secret from the Google Developers Console.
-#   <code.google.com/apis/console>
+#   <https://developers.google.com/console>
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only'
 USER_AGENT = 'app-engine-bucket-lister'
 
-
 # Since we don't plan to use all object attributes, we pass a fields argument to
 # specify what the server should return.
 FIELDS = 'items(name,media(timeCreated,hash,length))'
-
-
-def JsonObjToXml(obj):
-  """Convert a JSON object description into an XML string fields."""
-  media = obj['media']
-  return (('<Contents>'
-           '<Key>%s</Key>'
-           '<LastModified>%s</LastModified>'
-           '<MD5>%s</MD5>'
-           '<Size>%s</Size>'
-           '</Contents>')
-          % (obj['name'], media['timeCreated'], media['hash'], media['length']))
-
-
-def JsonListingToXml(bucket, json_listing):
-  """Convert the JSON listing to an XML string with the desired fields."""
-  object_list_xml = ''.join([JsonObjToXml(obj)
-                             for obj in json_listing['items']])
-  return (('<?xml version=\'1.0\' encoding=\'UTF-8\'?>'
-           '<?xml-stylesheet href="/listing.xsl" type="text/xsl"?>'
-           '<ListBucketResult xmlns=\'http://doc.s3.amazonaws.com/2006-03-01\'>'
-           '<Name>%s</Name>%s</ListBucketResult>') % (bucket, object_list_xml))
 
 
 def GetBucketName(path):
@@ -125,21 +103,21 @@ class AuthHandler(webapp.RequestHandler):
 
     bucket = self.request.get('state')
     storage = build_service('storage', 'v1beta1', http=http)
-    list_resp = storage.objects().list(bucket=bucket, fields=FIELDS).execute()
+    list_response = storage.objects().list(bucket=bucket,
+                                           fields=FIELDS).execute()
+    template_values = {'items': list_response['items'], 'bucket_name': bucket}
 
-    self.response.headers['Content-Type'] = 'text/xml'
-    self.response.out.write(JsonListingToXml(bucket, list_resp))
-
-
-def main():
-  application = webapp.WSGIApplication(
-      [
-          ('/oauth2callback', AuthHandler),
-          ('/..*', MainHandler)
-      ],
-      debug=True)
-  run_wsgi_app(application)
+    # We use a templating engine to format our output. For more information:
+    #   <http://jinja.pocoo.org/docs/>
+    jinja_env = jinja2.Environment(
+        loader=jinja2.FileSystemLoader(os.path.dirname(__file__)))
+    template = jinja_env.get_template('listing.html')
+    self.response.out.write(template.render(template_values))
 
 
-if __name__ == '__main__':
-  main()
+app = webapp.WSGIApplication(
+    [
+        ('/oauth2callback', AuthHandler),
+        ('/..*', MainHandler)
+    ],
+    debug=True)

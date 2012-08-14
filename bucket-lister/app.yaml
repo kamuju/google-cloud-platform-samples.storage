@@ -1,7 +1,7 @@
-application: bucket_lister
+application: bucket-lister
 version: 1
 runtime: python27
-threadsafe: no
+threadsafe: yes
 api_version: 1
 
 handlers:
@@ -9,13 +9,9 @@ handlers:
   static_files: index.html
   upload: index.html
 
-- url: /listing.xsl
-  static_files: listing.xsl
-  upload: listing.xsl
-
-- url: /favicon.ico
-  static_files: favicon.ico
-  upload: favicon.ico
-
 - url: .*
-  script: main.py
+  script: main.app
+
+libraries:
+- name: jinja2
+  version: latest
