@@ -49,7 +49,7 @@ from google.appengine.ext.webapp.util import login_required
 
 # NOTE: You must provide a client ID and secret with access to the GCS JSON API.
 # You can acquire a client ID and secret from the Google Developers Console.
-#   <https://developers.google.com/console>
+#   <https://developers.google.com/console#access>
 CLIENT_ID = ''
 CLIENT_SECRET = ''
 SCOPE = 'https://www.googleapis.com/auth/devstorage.read_only'
