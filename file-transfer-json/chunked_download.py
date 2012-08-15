@@ -45,7 +45,7 @@ def HandleProgresslessIter(error, progressless_iters, num_retries):
     print 'Failed to make progress for too many consecutive iterations.'
     raise error
 
-  sleeptime = random.random() + (2**progressless_iters)
+  sleeptime = random.random() * (2**progressless_iters)
   print ('Caught exception (%s). Sleeping for %s seconds before retry #%d.'
          % (str(error), sleeptime, progressless_iters))
   time.sleep(sleeptime)
@@ -70,6 +70,9 @@ def Download(downloader, num_retries=5):
     if error is not None:
       progressless_iters += 1
       HandleProgresslessIter(error, progressless_iters, num_retries)
+    else:
+      progressless_iters = 0
+
   return True
 
 
