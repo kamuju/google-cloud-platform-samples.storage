@@ -46,7 +46,7 @@ from oauth2client.tools import run as run_oauth2
 #   <https://developers.google.com/accounts/docs/OAuth2>
 CLIENT_SECRETS_FILE = 'client_secrets.json'
 
-# File where we will store authentication credentials after aquiring them.
+# File where we will store authentication credentials after acquiring them.
 CREDENTIALS_FILE = 'credentials.json'
 
 # Message describing how to use the script.
