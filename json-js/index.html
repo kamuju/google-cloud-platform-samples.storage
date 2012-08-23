@@ -1,0 +1,231 @@
+<!-- 
+/*
+ * Copyright 2012 Google Inc.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * 
+ */
+-->
+
+<html>
+  <head>
+    <title>Google Cloud Storage JavaScript Sample App</title>
+    <script src="https://apis.google.com/js/client.js"></script>
+    <script 
+      src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js">
+    </script> 
+    <script>
+
+//
+// Non-trivial Javascript code should generally be served from a separate
+// file but I'm breaking that rule here to provide a simple, one file
+// sample app that can be loaded from a local file with no external
+// dependencies and no requirement to setup a web server. If you adapt 
+// this code into a real application, you should probably relocate this
+// inline Javascript source into a separate file.
+//
+
+//
+// Replace CLIENT_ID with the client id from the API Access page at 
+// https://code.google.com/apis/console/#access.
+//
+CLIENT_ID = 'CLIENT_ID';
+
+//
+// Replace API_KEY with the API key from the API Access page at 
+// https://code.google.com/apis/console/#access.
+//
+API_KEY = 'API_KEY';
+
+//
+// Scope specifier for granting full access to Google Cloud Storage.
+//
+SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
+
+//
+// Constants
+//
+OUTPUT_ID = '#output';
+LIST_BUCKET_ID = '#list-bucket';
+LOGIN_BUTTON_ID = '#login-button';
+LOGIN_STATUS_ID = '#login-status';
+LOGIN_STATUS_IN = 'Logged in';
+LOGIN_STATUS_OUT = 'Logged out';
+
+//
+// Current access token, expiration time, and library load status.
+//
+var Saved_access_token = 0;
+var Token_expiration_time = 0;
+var Client_library_loaded = false;
+
+function init() {
+  /**
+   * init() runs when the page has finished loading. It sets the API key
+   * and dyamically loads the Google Cloud Storage JSON client library.
+   */
+  gapi.client.setApiKey(API_KEY);
+  gapi.client.load('storage', 'v1beta1', function(response) {
+    if (response && ('error' in response)) {
+      alert('error loading client library, details:\n' + 
+        JSON.stringify(response));
+    } else {
+      Client_library_loaded = true;
+    }
+  });
+  alert(rc);
+}
+
+function libraryLoaded() {
+  /**
+   * libraryLoaded() verifies the Javascript library was dynamically loaded. 
+   * If not, it displays an error and returns false.
+   */
+  if (!Client_library_loaded) {
+    alert('Can\'t proceed because client library was not loaded');
+    return false;
+  }
+  return true;
+}
+
+function login() {
+  /**
+   * login() initiates the OAuth 2.0 authorization sequence.
+   */
+  if (!libraryLoaded()) {
+    // If library not loaded, return immediately.
+    return;
+  }
+  var config = {
+    'client_id': CLIENT_ID,
+    'scope': SCOPE
+  };
+  gapi.auth.authorize(config, checkStatus);
+}
+
+function checkStatus() {
+  /**
+   * checkStatus() validates the authorization states and sets
+   * the login status and the login button's visibility accordingly.
+   */
+  now = new Date().getTime() / 1000;
+  var current_access_token = gapi.auth.getToken();
+
+  if (current_access_token) {
+    // We have an access token so user must be logged in.
+    $(LOGIN_STATUS_ID).html(LOGIN_STATUS_IN);
+    $(LOGIN_BUTTON_ID).hide();
+    // Is this a new access token? If so, save it with new expiration time.
+    if (current_access_token != Saved_access_token) {
+      Saved_access_token = current_access_token;
+      Token_expiration_time = now + parseInt(Saved_access_token.expires_in);
+      // Trim expiration time by one minute to avoid hitting edge of interval.
+      Token_expiration_time -= 60;
+    } else {
+      // Check for expired token and refresh, if necessary.
+      if (now > Token_expiration_time) {
+        login();
+        return false;
+      }
+    }
+  } else {
+    // No access token available so user is not logged in.
+    $(LOGIN_STATUS_ID).html(LOGIN_STATUS_OUT);
+    $(LOGIN_BUTTON_ID).show();
+    alert('Not logged in, click login button to proceed.');
+    return false;
+  }
+  return true;
+}
+
+function listBucket() {
+  /**
+   * listBucket() uses the Google Cloud Storage JSON API to obtain
+   * a bucket listing and formats and displays the results.
+   */
+  if (!libraryLoaded()) {
+    // If library not loaded, return immediately.
+    return;
+  }
+  if (!checkStatus()) {
+    // If not logged in, return immediately.
+    return;
+  }
+  bucket = $(LIST_BUCKET_ID).val();
+  request = gapi.client.storage.objects.list({'bucket': bucket});
+  request.execute(function(response) { 
+    if (response && ('code' in response)) {
+      err = 'error: code ' + response['code'] + ', ' + response['message'];
+      $(OUTPUT_ID).html(err);
+    } else {
+      html = '<table border="1" cellpadding="3px"><tr><th>Object Name</th><th>Creation Time</th><th>Size</th><th>Hash (Algorithm)</th></tr>';
+      if (response && ('items' in response)) {
+        items = response['items'];
+        for (var i = 0; i < items.length; i++) {
+          item = items[i];
+          media = item['media'];
+          html += '<tr><td align="left">' + item['name'] + 
+                  '</td><td align="right">' + media['timeCreated'] + 
+                  '</td><td align="right">' + media['length'] + 
+                  '</td><td align="right">' + media['hash'] + 
+                  '(' + media['algorithm'] + ')' + 
+                  '</td></tr>';
+        }
+      }
+      html += '</table>';
+      $(OUTPUT_ID).html(html);
+    }
+  });
+}
+    </script>
+  </head>
+
+  <body onload="init();" id="body">
+    <h1>&nbsp&nbsp&nbsp<a href="http://developers.google.com/storage">Google Cloud Storage</a> JavaScript Sample App</h1>
+    <br>
+    <table>
+      <tr>
+        <td><b>Authorization</b></td>
+      </tr>
+      <tr>
+        <td>Login Status:</td>
+        <td id="login-status">Logged Out</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><button id="login-button" onclick="login();">Login</button></td>
+      </tr>
+      <tr><td>&nbsp;</td></tr>
+      <tr>
+        <td><b>Bucket Listing</b></td>
+      </tr>
+      <tr>
+        <td>Bucket:</td>
+        <td>
+          <input class="textinput" id="list-bucket" 
+            onkeypress="if (event.keyCode == 13) {listBucket()}">
+          </input>
+        </td>
+      </tr>
+      <tr>
+        <td></td>
+        <td>
+          <button class="button" name="list" onclick="listBucket();">
+            List Bucket Contents
+          </button>
+        </td>
+      </tr>
+    <table>
+    <br>
+    <div id="output"></div>
+  </body>
+</html>
