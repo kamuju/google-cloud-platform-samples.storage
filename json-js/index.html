@@ -1,5 +1,5 @@
 <!-- 
-/*
+/**
  * Copyright 2012 Google Inc.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,35 +25,35 @@
     </script> 
     <script>
 
-//
-// Non-trivial Javascript code should generally be served from a separate
-// file but I'm breaking that rule here to provide a simple, one file
-// sample app that can be loaded from a local file with no external
-// dependencies and no requirement to setup a web server. If you adapt 
-// this code into a real application, you should probably relocate this
-// inline Javascript source into a separate file.
-//
+/**
+ * Non-trivial Javascript code should generally be served from a separate
+ * file but I'm breaking that rule here to provide a simple, one file
+ * sample app that can be loaded from a local file with no external
+ * dependencies and no requirement to setup a web server. If you adapt 
+ * this code into a real application, you should probably relocate this
+ * inline Javascript source into a separate file.
+ */
 
-//
-// Replace CLIENT_ID with the client id from the API Access page at 
-// https://code.google.com/apis/console/#access.
-//
+/**
+ * Replace CLIENT_ID with the client id from the API Access page at 
+ * https://code.google.com/apis/console/#access.
+ */
 CLIENT_ID = 'CLIENT_ID';
 
-//
-// Replace API_KEY with the API key from the API Access page at 
-// https://code.google.com/apis/console/#access.
-//
+/**
+ * Replace API_KEY with the API key from the API Access page at 
+ * https://code.google.com/apis/console/#access.
+ */
 API_KEY = 'API_KEY';
 
-//
-// Scope specifier for granting full access to Google Cloud Storage.
-//
+/**
+ * Scope specifier for granting full access to Google Cloud Storage.
+ */
 SCOPE = 'https://www.googleapis.com/auth/devstorage.full_control';
 
-//
-// Constants
-//
+/**
+ * Constants
+ */
 OUTPUT_ID = '#output';
 LIST_BUCKET_ID = '#list-bucket';
 LOGIN_BUTTON_ID = '#login-button';
@@ -61,18 +61,18 @@ LOGIN_STATUS_ID = '#login-status';
 LOGIN_STATUS_IN = 'Logged in';
 LOGIN_STATUS_OUT = 'Logged out';
 
-//
-// Current access token, expiration time, and library load status.
-//
+/**
+ * Current access token, expiration time, and library load status.
+ */
 var savedAccessToken = 0;
 var tokenExpirationTime = 0;
 var clientLibraryLoaded = false;
 
+/**
+ * init() runs when the page has finished loading. It sets the API key
+ * and dyamically loads the Google Cloud Storage JSON client library.
+ */
 function init() {
-  /**
-   * init() runs when the page has finished loading. It sets the API key
-   * and dyamically loads the Google Cloud Storage JSON client library.
-   */
   gapi.client.setApiKey(API_KEY);
   gapi.client.load('storage', 'v1beta1', function(response) {
     if (response && ('error' in response)) {
@@ -84,11 +84,11 @@ function init() {
   });
 }
 
+/**
+ * libraryLoaded() verifies the Javascript library was dynamically loaded. 
+ * If not, it displays an error and returns false.
+ */
 function libraryLoaded() {
-  /**
-   * libraryLoaded() verifies the Javascript library was dynamically loaded. 
-   * If not, it displays an error and returns false.
-   */
   if (!clientLibraryLoaded) {
     alert('Can\'t proceed because client library was not loaded');
     return false;
@@ -96,10 +96,10 @@ function libraryLoaded() {
   return true;
 }
 
+/**
+ * login() initiates the OAuth 2.0 authorization sequence.
+ */
 function login() {
-  /**
-   * login() initiates the OAuth 2.0 authorization sequence.
-   */
   if (!libraryLoaded()) {
     // If library not loaded, return immediately.
     return;
@@ -111,11 +111,11 @@ function login() {
   gapi.auth.authorize(config, checkStatus);
 }
 
+/**
+ * checkStatus() validates the authorization states and sets
+ * the login status and the login button's visibility accordingly.
+ */
 function checkStatus() {
-  /**
-   * checkStatus() validates the authorization states and sets
-   * the login status and the login button's visibility accordingly.
-   */
   now = new Date().getTime() / 1000;
   var current_access_token = gapi.auth.getToken();
 
@@ -146,11 +146,11 @@ function checkStatus() {
   return true;
 }
 
+/**
+ * listBucket() uses the Google Cloud Storage JSON API to obtain
+ * a bucket listing and formats and displays the results.
+ */
 function listBucket() {
-  /**
-   * listBucket() uses the Google Cloud Storage JSON API to obtain
-   * a bucket listing and formats and displays the results.
-   */
   if (!libraryLoaded()) {
     // If library not loaded, return immediately.
     return;
