@@ -33,6 +33,7 @@ from apiclient.discovery import build as discovery_build
 from apiclient.errors import HttpError
 from apiclient.http import MediaFileUpload
 from apiclient.http import MediaIoBaseDownload
+from json import dumps as json_dumps
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage as CredentialStorage
 from oauth2client.tools import run as run_oauth2
@@ -88,7 +89,7 @@ CHUNKSIZE = 2 * 1024 * 1024
 DEFAULT_MIMETYPE = 'application/octet-stream'
 
 
-def GetAuthenticatedService(scope):
+def get_authenticated_service(scope):
   print 'Authenticating...'
   flow = flow_from_clientsecrets(CLIENT_SECRETS_FILE, scope=scope,
                                  message=MISSING_CLIENT_SECRETS_MESSAGE)
@@ -103,7 +104,7 @@ def GetAuthenticatedService(scope):
   return discovery_build('storage', 'v1beta1', http=http)
 
 
-def HandleProgresslessIter(error, progressless_iters, num_retries):
+def handle_progressless_iter(error, progressless_iters, num_retries):
   if progressless_iters > num_retries:
     print 'Failed to make progress for too many consecutive iterations.'
     raise error
@@ -114,16 +115,16 @@ def HandleProgresslessIter(error, progressless_iters, num_retries):
   time.sleep(sleeptime)
 
 
-def PrintWithCarriageReturn(s):
+def print_with_carriage_return(s):
   sys.stdout.write('\r' + s)
   sys.stdout.flush()
 
 
-def Upload(argv):
+def upload(argv):
   filename = argv[1]
   bucket_name, object_name = argv[2][5:].split('/', 1)
 
-  service = GetAuthenticatedService(RW_SCOPE)
+  service = get_authenticated_service(RW_SCOPE)
 
   print 'Building upload request...'
   media = MediaFileUpload(filename, chunksize=CHUNKSIZE, resumable=True)
@@ -142,7 +143,7 @@ def Upload(argv):
       error = None
       progress, response = request.next_chunk()
       if progress:
-        PrintWithCarriageReturn('Upload %d%%' % (100 * progress.progress()))
+        print_with_carriage_return('Upload %d%%' % (100 * progress.progress()))
       progressless_iters = 0
     except HttpError, err:
       error = err
@@ -153,19 +154,20 @@ def Upload(argv):
 
     if error is not None:
       progressless_iters += 1
-      HandleProgresslessIter(error, progressless_iters, num_retries)
+      handle_progressless_iter(error, progressless_iters, num_retries)
     else:
       progressless_iters = 0
   print '\nUpload complete!'
 
-  print response
+  print 'Uploaded Object:'
+  print json_dumps(response, indent=2)
 
 
-def Download(argv):
+def download(argv):
   bucket_name, object_name = argv[1][5:].split('/', 1)
   filename = argv[2]
 
-  service = GetAuthenticatedService(RO_SCOPE)
+  service = get_authenticated_service(RO_SCOPE)
 
   print 'Building download request...'
   f = file(filename, 'w')
@@ -184,7 +186,7 @@ def Download(argv):
       error = None
       progress, done = media.next_chunk()
       if progress:
-        PrintWithCarriageReturn('Download %d%%.'
+        print_with_carriage_return('Download %d%%.'
                                 % int(progress.progress() * 100))
     except HttpError, err:
       error = err
@@ -195,12 +197,11 @@ def Download(argv):
 
     if error is not None:
       progressless_iters += 1
-      HandleProgresslessIter(error, progressless_iters, num_retries)
+      handle_progressless_iter(error, progressless_iters, num_retries)
     else:
       progressless_iters = 0
 
   print '\nDownload complete!'
-  print done
 
 
 if __name__ == '__main__':
@@ -208,8 +209,8 @@ if __name__ == '__main__':
     print 'Too few arguments.'
     print USAGE
   if sys.argv[2].startswith('gs://'):
-    Upload(sys.argv)
+    upload(sys.argv)
   elif sys.argv[1].startswith('gs://'):
-    Download(sys.argv)
+    download(sys.argv)
   else:
     print USAGE
