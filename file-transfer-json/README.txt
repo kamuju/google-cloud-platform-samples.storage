@@ -32,3 +32,6 @@ USAGE:
 
     $ python chunked_transfer.py gs://foo/bar Desktop/file_2
 
+  When an upload concludes, the script prints the new object's JSON
+  representation.
+
