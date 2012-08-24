@@ -64,9 +64,9 @@ LOGIN_STATUS_OUT = 'Logged out';
 //
 // Current access token, expiration time, and library load status.
 //
-var Saved_access_token = 0;
-var Token_expiration_time = 0;
-var Client_library_loaded = false;
+var savedAccessToken = 0;
+var tokenExpirationTime = 0;
+var clientLibraryLoaded = false;
 
 function init() {
   /**
@@ -77,12 +77,11 @@ function init() {
   gapi.client.load('storage', 'v1beta1', function(response) {
     if (response && ('error' in response)) {
       alert('error loading client library, details:\n' + 
-        JSON.stringify(response));
+            JSON.stringify(response));
     } else {
-      Client_library_loaded = true;
+      clientLibraryLoaded = true;
     }
   });
-  alert(rc);
 }
 
 function libraryLoaded() {
@@ -90,7 +89,7 @@ function libraryLoaded() {
    * libraryLoaded() verifies the Javascript library was dynamically loaded. 
    * If not, it displays an error and returns false.
    */
-  if (!Client_library_loaded) {
+  if (!clientLibraryLoaded) {
     alert('Can\'t proceed because client library was not loaded');
     return false;
   }
@@ -125,14 +124,14 @@ function checkStatus() {
     $(LOGIN_STATUS_ID).html(LOGIN_STATUS_IN);
     $(LOGIN_BUTTON_ID).hide();
     // Is this a new access token? If so, save it with new expiration time.
-    if (current_access_token != Saved_access_token) {
-      Saved_access_token = current_access_token;
-      Token_expiration_time = now + parseInt(Saved_access_token.expires_in);
+    if (current_access_token != savedAccessToken) {
+      savedAccessToken = current_access_token;
+      tokenExpirationTime = now + parseInt(savedAccessToken.expires_in);
       // Trim expiration time by one minute to avoid hitting edge of interval.
-      Token_expiration_time -= 60;
+      tokenExpirationTime -= 60;
     } else {
       // Check for expired token and refresh, if necessary.
-      if (now > Token_expiration_time) {
+      if (now > tokenExpirationTime) {
         login();
         return false;
       }
