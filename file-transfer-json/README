@@ -1,4 +1,8 @@
-File Transfer with Google Cloud Storage and the Google APIs Python Client Library
+Uploads and downloads files between Google Cloud Storage and the local
+filesystem using the Google APIs Python Client Library.
+
+api: storage
+keywords: cmdline, media, oauth2
 
 chunked_transfer.py
 SETUP:
@@ -31,4 +35,7 @@ USAGE:
   and this command downloads that object back to a file on the desktop:
 
     $ python chunked_transfer.py gs://foo/bar Desktop/file_2
+
+  When an upload concludes, the script prints the new object's JSON
+  representation.
 
