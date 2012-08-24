@@ -2,7 +2,7 @@ Uploads and downloads files between Google Cloud Storage and the local
 filesystem using the Google APIs Python Client Library.
 
 api: storage
-keywords: storage, json, upload, download, media
+keywords: cmdline, media, oauth2
 
 chunked_transfer.py
 SETUP:
